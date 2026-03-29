@@ -12,3 +12,7 @@ AGENTS.md
 run-demo.sh
 vite.config.js
 tsconfig.json
+nightly-dist/
+ghostty/
+patches/
+bench/

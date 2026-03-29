@@ -977,26 +977,26 @@ index 000000000..73ae2e6fa
 +/// Returns dirty state: 0=none, 1=partial, 2=full
 +pub fn renderStateUpdate(ptr: ?*anyopaque) callconv(.c) GhosttyDirty {
 +    const wrapper: *TerminalWrapper = @ptrCast(@alignCast(ptr orelse return .full));
-+    
++
 +    // Detect screen buffer switch (normal <-> alternate)
 +    const current_is_alternate = wrapper.terminal.screens.active_key == .alternate;
 +    const screen_switched = current_is_alternate != wrapper.last_screen_is_alternate;
 +    wrapper.last_screen_is_alternate = current_is_alternate;
-+    
++
 +    // When screen switches, we must fully reset the render state to avoid
 +    // stale cached cell data from the previous screen buffer.
 +    if (screen_switched) {
 +        wrapper.render_state.deinit(wrapper.alloc);
 +        wrapper.render_state = RenderState.empty;
 +    }
-+    
++
 +    wrapper.render_state.update(wrapper.alloc, &wrapper.terminal) catch return .full;
-+    
++
 +    // If screen switched, always return full dirty to force complete redraw
 +    if (screen_switched) {
 +        return .full;
 +    }
-+    
++
 +    return switch (wrapper.render_state.dirty) {
 +        .false => .none,
 +        .partial => .partial,
@@ -1021,7 +1021,7 @@ index 000000000..73ae2e6fa
 +    return @intCast(wrapper.render_state.cursor.active.x);
 +}
 +
-+/// Get cursor Y position  
++/// Get cursor Y position
 +pub fn renderStateGetCursorY(ptr: ?*anyopaque) callconv(.c) c_int {
 +    const wrapper: *const TerminalWrapper = @ptrCast(@alignCast(ptr orelse return 0));
 +    return @intCast(wrapper.render_state.cursor.active.y);
@@ -1287,22 +1287,22 @@ index 000000000..73ae2e6fa
 +    const wrapper: *const TerminalWrapper = @ptrCast(@alignCast(ptr orelse return -1));
 +    const rs = &wrapper.render_state;
 +    const cols = rs.cols;
-+    
++
 +    if (buf_size < cols) return -1;
 +    if (offset < 0) return -1;
-+    
++
 +    const scrollback_len = getScrollbackLength(ptr);
 +    if (offset >= scrollback_len) return -1;
-+    
++
 +    // Get the pin for this scrollback row
 +    // history point: y=0 is oldest, y=scrollback_len-1 is newest
 +    const pages = &wrapper.terminal.screens.active.pages;
 +    const pin = pages.pin(.{ .history = .{ .y = @intCast(offset) } }) orelse return -1;
-+    
++
 +    // Get cells for this row
 +    const cells = pin.cells(.all);
 +    const page = pin.node.data;
-+    
++
 +    // Fill output buffer
 +    for (0..cols) |x| {
 +        if (x >= cells.len) {
@@ -1321,15 +1321,15 @@ index 000000000..73ae2e6fa
 +            };
 +            continue;
 +        }
-+        
++
 +        const cell = &cells[x];
-+        
++
 +        // Get style from page styles (cell has style_id)
 +        const sty: Style = if (cell.style_id > 0)
 +            page.styles.get(page.memory, cell.style_id).*
 +        else
 +            .{};
-+        
++
 +        // Resolve colors
 +        const fg: color.RGB = switch (sty.fg_color) {
 +            .none => rs.colors.foreground,
@@ -1337,7 +1337,7 @@ index 000000000..73ae2e6fa
 +            .rgb => |rgb| rgb,
 +        };
 +        const bg: color.RGB = if (sty.bg(cell, &rs.colors.palette)) |rgb| rgb else rs.colors.background;
-+        
++
 +        // Build flags
 +        var flags: u8 = 0;
 +        if (sty.flags.bold) flags |= 1 << 0;
@@ -1433,11 +1433,11 @@ index 000000000..73ae2e6fa
 +pub fn isRowWrapped(ptr: ?*anyopaque, y: c_int) callconv(.c) bool {
 +    const wrapper: *const TerminalWrapper = @ptrCast(@alignCast(ptr orelse return false));
 +    const pages = &wrapper.terminal.screens.active.pages;
-+    
++
 +    // Get pin for this row in active area
 +    const pin = pages.pin(.{ .active = .{ .y = @intCast(y) } }) orelse return false;
 +    const rac = pin.rowAndCell();
-+    
++
 +    // wrap_continuation means this row continues from the previous row
 +    return rac.row.wrap_continuation;
 +}
@@ -1557,9 +1557,9 @@ index 000000000..73ae2e6fa
 +    const wrapper: *TerminalWrapper = @ptrCast(@alignCast(ptr orelse return -1));
 +    const len = @min(wrapper.response_buffer.items.len, buf_size);
 +    if (len == 0) return 0;
-+    
++
 +    @memcpy(out[0..len], wrapper.response_buffer.items[0..len]);
-+    
++
 +    // Remove consumed bytes from buffer
 +    if (len == wrapper.response_buffer.items.len) {
 +        wrapper.response_buffer.clearRetainingCapacity();
@@ -1572,7 +1572,7 @@ index 000000000..73ae2e6fa
 +        );
 +        wrapper.response_buffer.shrinkRetainingCapacity(wrapper.response_buffer.items.len - len);
 +    }
-+    
++
 +    return @intCast(len);
 +}
 +

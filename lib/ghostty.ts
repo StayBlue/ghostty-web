@@ -341,10 +341,18 @@ export class GhosttyTerminal {
 
   write(data: string | Uint8Array): void {
     const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-    const ptr = this.exports.ghostty_wasm_alloc_u8_array(bytes.length);
-    new Uint8Array(this.memory.buffer).set(bytes, ptr);
-    this.exports.ghostty_terminal_write(this.handle, ptr, bytes.length);
-    this.exports.ghostty_wasm_free_u8_array(ptr, bytes.length);
+
+    // Chunk large writes to avoid WASM memory issues. The WASM allocator
+    // and terminal state machine can fail on very large single writes
+    // (e.g. replaying scrollback history on reconnect).
+    const MAX_CHUNK = 64 * 1024; // 64KB per write
+    for (let offset = 0; offset < bytes.length; offset += MAX_CHUNK) {
+      const chunk = bytes.subarray(offset, Math.min(offset + MAX_CHUNK, bytes.length));
+      const ptr = this.exports.ghostty_wasm_alloc_u8_array(chunk.length);
+      new Uint8Array(this.memory.buffer).set(chunk, ptr);
+      this.exports.ghostty_terminal_write(this.handle, ptr, chunk.length);
+      this.exports.ghostty_wasm_free_u8_array(ptr, chunk.length);
+    }
   }
 
   resize(cols: number, rows: number): void {

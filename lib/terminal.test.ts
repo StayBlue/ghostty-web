@@ -3028,9 +3028,9 @@ describe('Synchronous open()', () => {
     const wasmTerm1 = term1.wasmTerm!;
 
     // Write multi-codepoint grapheme clusters (flag emoji, skin tone, ZWJ sequence)
-    wasmTerm1.write('\u{1F1FA}\u{1F1F8}');  // 🇺🇸 regional indicator pair
-    wasmTerm1.write('\u{1F44B}\u{1F3FD}');  // 👋🏽 wave + skin tone modifier
-    wasmTerm1.write('\u{1F468}\u200D\u{1F469}\u200D\u{1F467}');  // 👨‍👩‍👧 ZWJ family
+    wasmTerm1.write('\u{1F1FA}\u{1F1F8}'); // 🇺🇸 regional indicator pair
+    wasmTerm1.write('\u{1F44B}\u{1F3FD}'); // 👋🏽 wave + skin tone modifier
+    wasmTerm1.write('\u{1F468}\u200D\u{1F469}\u200D\u{1F467}'); // 👨‍👩‍👧 ZWJ family
 
     // Free the terminal that processed grapheme clusters
     wasmTerm1.free();

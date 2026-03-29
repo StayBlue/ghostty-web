@@ -6,3 +6,6 @@ dist/
 
 # WASM build output (built locally and in CI)
 ghostty-vt.wasm
+
+# Nightly build output
+nightly-dist/
